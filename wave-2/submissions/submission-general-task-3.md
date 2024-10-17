@@ -1,10 +1,16 @@
+![Story Protocol DeSpread Banner](https://raw.githubusercontent.com/DeSpread/story-validator/refs/heads/main/story-validators-race/wave-2/despread.jpg)
+
 # Story Validator Grafana Dashboard By DeSpread
 
 ## Grafana Official Dashboard Link
 - [Grafana Official Dashboard: "Story Validator Dashboard By DeSpread"](https://story-dashboard.shachopra.com/public-dashboards/64b43909c39142b2afbe4951f8cfb93a)
 - [Grafana Dashboard JSON file](https://raw.githubusercontent.com/DeSpread/story-validator-monitoring/refs/heads/main/story-dashboard-by-despread.json)
 
-## Getting Started
+## Demo Link
+To see a demo of a similar dashboard, you can visit this link
+- [Demo Dashboard By DeSpread](http://testnet.story.despreadlabs.io:3000/public-dashboards/d5ff4330fa5444d099e0c89a8ba155dc)
+
+## Installation Guide
 
 ### 1. Install Docker
 To begin, you need to have Docker installed. You can follow the official Docker installation guide:
