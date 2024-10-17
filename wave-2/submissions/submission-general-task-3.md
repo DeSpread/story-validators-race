@@ -29,6 +29,8 @@ prometheus = true
 prometheus_listen_addr = 26660
 ```
 
+You'll need to restart the Story node to allow access to the Prometheus endpoint.
+
 ### 4. Configure Prometheus
 Create or edit the Prometheus configuration file (`prometheus.yml`) to add scrape targets:
 ```bash
