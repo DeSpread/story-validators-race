@@ -1,65 +1,80 @@
 # Story Validator Grafana Dashboard By DeSpread
 
-**- Grafana Dashboard**: https://story-dashboard.shachopra.com/public-dashboards/64b43909c39142b2afbe4951f8cfb93a
+## Grafana Official Dashboard Link
+- [Grafana Official Dashboard: "Story Validator Dashboard By DeSpread"](https://story-dashboard.shachopra.com/public-dashboards/64b43909c39142b2afbe4951f8cfb93a)
+- [Grafana Dashboard JSON file](https://raw.githubusercontent.com/DeSpread/story-validator-monitoring/refs/heads/main/story-dashboard-by-despread.json)
 
-**- This is public dashboard from my server and does not require login**
+## Getting Started
 
-You can change the time range by clicking the Time Range button in the top right of website.
+### 1. Install Docker
+To begin, you need to have Docker installed. You can follow the official Docker installation guide:
+- [Docker Installation on Ubuntu](https://docs.docker.com/engine/install/ubuntu)
 
-## Setting Up Grafana Dashboard for Node Monitoring
-### 1. Install docker
-- Official website: https://docs.docker.com/engine/install/ubuntu/
+### 2. Create Directories for Grafana
+```bash
+mkdir -p $HOME/docker/grafana
+cd $HOME/docker/grafana
+```
 
-### 2. Install Node Exporter
+### 3. Configure Story Node Exporter
+Edit the Story node configuration file to enable Prometheus metrics:
+```bash
+vi $HOME/.story/story/config/config.toml
+```
 
-### 3. Configure prometheus configuration
+Ensure that the Prometheus endpoint is enabled:
+```toml
+# Make sure Prometheus is set to true
+prometheus = true
+prometheus_listen_addr = 26660
+```
 
+### 4. Configure Prometheus
+Create or edit the Prometheus configuration file (`prometheus.yml`) to add scrape targets:
 ```bash
 vi prometheus.yml
 ```
 
-### 4. Configure docker-compose.yaml
-
-- Create Docker Compose Configuration for Grafana: docker-compose-grafana.yml
-
-```bash
-mkdir $HOME/docker
-mkdir $HOME/docker/grafana
-
-cd $HOME/docker/grafana
-vi .env
-```
-```dotenv
-GF_SECURITY_ADMIN_USER=admin
-GF_SECURITY_ADMIN_PASSWORD=admin
-```
-
+Add the following configuration:
 ```yaml
 global:
   scrape_interval: 15s
   scrape_timeout: 10s
   evaluation_interval: 15s
+
 alerting:
   alertmanagers:
     - static_configs:
-      - targets: []
+        - targets: []
       scheme: http
       timeout: 10s
       api_version: v1
+
 scrape_configs:
   - job_name: "prometheus"
     static_configs:
-      - targets: ["localhost:9090"]
+      - targets: ["<your-ip>:9090"]
   - job_name: "story"
     static_configs:
-      - targets: ["localhost:47660"]
-  - job_name: "exporter"
-    static_configs:
-      - targets: ["localhost:9100"]
+      - targets: ["<your-ip>:26660"]
+```
+Replace `<your-ip>` with your server's IP address.
+
+### 5. Configure Docker Compose for Grafana and Prometheus
+Create a Docker Compose configuration file for deploying Grafana and Prometheus:
+
+1. Create an environment file (`.env`) to store the Grafana admin credentials:
+```bash
+vi .env
+```
+```dotenv
+GF_SECURITY_ADMIN_USER=user
+GF_SECURITY_ADMIN_PASSWORD=user
 ```
 
+2. Create the Docker Compose file (`docker-compose.yml`):
 ```bash
-vi docker-compose.yaml
+vi docker-compose.yml
 ```
 ```yaml
 version: '3.8'
@@ -88,7 +103,7 @@ services:
       - '9090:9090'
     restart: unless-stopped
     volumes:
-      - ./prometheus.yaml:/etc/prometheus/prometheus.yaml
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus-storage:/prometheus
     networks:
       - shared
@@ -104,147 +119,34 @@ networks:
       config:
         - subnet: 172.16.1.0/24
 ```
-```
+
+3. Start the containers:
+```bash
 docker-compose up -d
 ```
-- This Docker Compose setup deploys Grafana in a Docker container
-- Access Grafana by navigating to http://your-ip:3000
 
-### 3. Install Prometheus
+This Docker Compose setup deploys Grafana and Prometheus in Docker containers.
 
-- Create Docker Compose Configuration for Prometheus: docker-compose-prometheus.yml
+- **Grafana** can be accessed at: [http://<your-ip>:3000](http://<your-ip>:3000)
+- **Prometheus** can be accessed at: [http://<your-ip>:9090](http://<your-ip>:9090)
 
-```
-cd $HOME
-mkdir docker/prometheus
 
-cd $HOME/docker/prometheus
-```
-```
-nano docker-compose-prometheus.yml
-```
-```bash
-services:
-  prometheus:
-    image: prom/prometheus
-    container_name: prom
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-    ports:
-      - 9092:9090
-    restart: unless-stopped
-    volumes:
-      - ./prometheus:/etc/prometheus
-      - prom_data:/prometheus
-volumes:
-  prom_data:
-```
-- Create Prometheus Configuration File: prometheus.yml
-```
-cd $HOME
-mkdir docker/prometheus/prometheus
-cd $HOME/docker/prometheus/prometheus
-```
-```
-nano prometheus.yml
-```
-```bash
-global:
-  scrape_interval: 15s
-  scrape_timeout: 10s
-  evaluation_interval: 15s
-alerting:
-  alertmanagers:
-    - static_configs:
-      - targets: []
-      scheme: http
-      timeout: 10s
-      api_version: v1
-scrape_configs:
-  - job_name: "prometheus"
-    static_configs:
-      - targets: ["your-ip:9092"]
-  - job_name: "story"
-    static_configs:
-      - targets: ["<your-ip>:47660"]
-  - job_name: "exporter"
-    static_configs:
-      - targets: ["<your-ip>:9100"]
-```
-```
-cd $HOME/docker/prometheus
-```
-```
-docker-compose -f docker-compose-prometheus.yml up -d
-```
-- This Docker Compose setup deploys Prometheus in a Docker container
-- If prometheus is successfully setup, then you can access http://your-ip:9092
+### 6. Import dashboard and Use Grafana
+After Grafana is up and running, you need to configure it through its web interface:
 
-### 4. Configure story config.toml
-```
-nano $HOME/.story/story/config/config.toml
-```
-```
-#make sure prometheus is set to true
-prometheus = true
-prometheus_listen_addr = 47660
-```
-### 5. Install Node Exporter
-- Download Node Exporter
-```
-cd $HOME
-wget https://github.com/prometheus/node_exporter/releases/download/v1.8.2/node_exporter-1.8.2.linux-amd64.tar.gz
-tar xvf node_exporter-1.8.2.linux-amd64.tar.gz
-cd node_exporter-1.8.2.linux-amd64
-```
-- Move the Node Exporter Binary
-```
-sudo cp node_exporter /usr/local/bin
-```
-- Create a Node Exporter User
-```
-sudo useradd --no-create-home --shell /bin/false node_exporter
-sudo chown node_exporter:node_exporter /usr/local/bin/node_exporter
-```
-- Configure the Service
-```
-sudo nano /etc/systemd/system/node_exporter.service
-```
-```bash
-[Unit]
-Description=Node Exporter
-Wants=network-online.target
-After=network-online.target
+1. **Access Grafana**: Navigate to [http://<your-ip>:3000](http://<your-ip>:3000).
+2. **Add Data Source**:
+   - Click on **Connections** > **Data Sources**.
+   - Choose **Prometheus** as the data source type.
+   - Add the Prometheus server URL: `http://<your-ip>:9090`.
+   - Click **Save & Test**.
+3. **Import Dashboard**:
+   - Go to **Dashboards** > **New Dashboard**.
+   - Click on **Import Dashboard**.
+   - In the Grafana dashboard ID field, enter the dashboard ID : `22081`
+   - If you're having trouble importing with ID, please upload the dashboard JSON file: [Grafana JSON file](https://raw.githubusercontent.com/DeSpread/story-validator-monitoring/refs/heads/main/story-dashboard-by-despread.json).
 
-[Service]
-User=node_exporter
-Group=node_exporter
-Type=simple
-ExecStart=/usr/local/bin/node_exporter
-Restart=always
-RestartSec=3
+Now you should have the Story Validator dashboard up and running!
 
-[Install]
-WantedBy=multi-user.target
-```
-- Start the service
-```
-sudo systemctl daemon-reload
-sudo systemctl enable node_exporter
-sudo systemctl start node_exporter
-sudo systemctl status node_exporter.service
-```
-- If node exporter is successfully setup, then you can access http://your-ip:9100
-
-### 6. Configuring and Using Grafana
-Configure Grafana through its web interface (http://your-ip:3000) to connect to your data sources & create dashboards.
-
-- Go to http://your-ip:3000 and click on data sources in Connections menu.
-- Choose **Prometheus** as data source type
-- Add Prometheus server URL: http://your-ip:9092
-- Then click Save & test.
-- Then go to Dashboards & click on new dashboard.
-- Then click on Import dashboard.
-- Upload dashboard JSON file: [Reference JSON file](https://raw.githubusercontent.com/shachopra-ai/story-grafana/refs/heads/main/grafana_dashboard.json)
-
-Thank you!
+---
+If you have any questions or issues, feel free to reach out or refer to the [Official Grafana documentation](https://grafana.com/docs/).
